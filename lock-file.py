@@ -1,5 +1,5 @@
 from Crypto.Cipher import DES
-from tools import create_parser, pad, HOME, join
+from tools import create_parser, pad, join
 
 if __name__ == '__main__':
     parser = create_parser()
@@ -10,25 +10,38 @@ if __name__ == '__main__':
 
     des = DES.new(key, DES.MODE_ECB)
 
-    file = open(namespace.sourcefile, 'r')
+    try:
+        # try to open file with passwords
+        file = open(namespace.sourcefile, 'r')
+    except FileNotFoundError:
+        # if file dose note found, close the program
+        print('Source file not found')
+        raise SystemExit(1)
+
     passwords = file.read().encode()
     file.close()
     passwords = pad(passwords)
 
     encrypted_text = des.encrypt(passwords)
 
-    encoding_path: list = namespace.encryptedfile.split('.')
-    encoding_dir_path = encoding_path[0]
+    path = namespace.encryptedfile
+    name = namespace.name
 
-    if len(encoding_path) == 2:
-        file = open(namespace.encryptedfile, 'wb')
-    elif len(encoding_path) == 1:
-        if namespace.name is None:
-            file = open(join(encoding_dir_path, 'crypto.txt'), 'wb')
-        else:
-            file = open(join(encoding_dir_path, namespace.name), 'wb')
-    else:
-        raise Exception('Error path to encoding file')
+    try:
+        # open or create file via path
+        file = open(path, 'wb')
+    except IsADirectoryError:
+        # if path with out name, try to create or open file with name
+        file = open(join(path, name), 'wb')
+    except FileNotFoundError:
+        # can not fined dir with file
+        print('No such file or dir')
+        raise SystemExit(1)
+    except:
+        print('Path error')
+        raise SystemExit(1)
+
+
     file.write(encrypted_text)
     file.close()
 

@@ -6,7 +6,11 @@ if __name__ == '__main__':
     parser: ArgumentParser = create_parser()
     namespace = parser.parse_args()
 
-    file = open(namespace.encryptedfile, 'rb')
+    try:
+        file = open(namespace.encryptedfile, 'rb')
+    except:
+        print('Encrypted file path error')
+        raise SystemExit(1)
     crypto: bytes = file.read()
     file.close()
 
@@ -16,33 +20,28 @@ if __name__ == '__main__':
     des: DES = DES.new(key, DES.MODE_ECB)
     data: bytes = des.decrypt(crypto)
 
-    file_info: list = namespace.sourcefile.split('.')
-    # path to dir with decoding file
-    file_path: str = file_info[0]
-    file_name: str = ''
+    try:
+        passwords = data.decode()
+    except UnicodeDecodeError:
+        print('Error password')
+        raise SystemExit(1)
 
-    if len(file_info) == 2:
-        # if path has file name
-        file = open(file_path, 'w')
-    elif len(file_info) == 1:
-        # if only path to dir, set base file name or users (via key --name)
-        if namespace.name is None:
-            file_name: str = 'passwords.txt'
-        else:
-            file_name: str = namespace.name
-        file = open(join(file_path, file_name), 'w')
-    else:
-        raise Exception('Error output file name')
+    path = namespace.sourcefile
+    name = namespace.name
 
     try:
-        # password is write
-        file.write(data.decode())
-    except UnicodeDecodeError:
-        # password is wrong
-        file.close()
-        if len(file_info) == 2:
-            file = open(file_path, 'wb')
-        else:
-            file = open(join(file_path, file_name), 'wb')
-        file.write(data)
+        # open or create file via path
+        file = open(path, 'w')
+    except IsADirectoryError:
+        # if path with out name, try to create or open file with name
+        file = open(join(path, name), 'w')
+    except FileNotFoundError:
+        # can not fined dir with file
+        print('No such file or dir')
+        raise SystemExit(1)
+    except:
+        print('Path error')
+        raise SystemExit(1)
+
+    file.write(passwords)
     file.close()
