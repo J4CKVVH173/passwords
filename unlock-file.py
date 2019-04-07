@@ -1,5 +1,7 @@
-from Crypto.Cipher import DES
-from tools import create_parser, pad, join, ArgumentParser
+from Crypto.Cipher import AES
+from Crypto.Util.Padding import pad, unpad
+from tools import create_parser, join, ArgumentParser
+from base64 import b64decode
 
 
 if __name__ == '__main__':
@@ -7,21 +9,29 @@ if __name__ == '__main__':
     namespace = parser.parse_args()
 
     try:
-        file = open(namespace.encryptedfile, 'rb')
+        file = open(namespace.encryptedfile, 'r')
     except:
         print('Encrypted file path error')
         raise SystemExit(1)
-    crypto: bytes = file.read()
+    crypto: str = file.read()
     file.close()
 
     key: bytes = namespace.password.encode()
-    key = pad(key)
+    key = pad(key, AES.block_size)
 
-    des: DES = DES.new(key, DES.MODE_ECB)
-    data: bytes = des.decrypt(crypto)
+    iv = b64decode(crypto[0:24])
+    ct = b64decode(crypto[24:])
+
+    cipher: AES = AES.new(key, AES.MODE_CBC, iv)
+    try:
+        data: bytes = unpad(cipher.decrypt(ct), AES.block_size)
+    except ValueError:
+        print("Error password")
+        raise SystemExit(1)
 
     try:
         passwords = data.decode()
+
     except UnicodeDecodeError:
         print('Error password')
         raise SystemExit(1)

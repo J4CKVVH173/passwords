@@ -17,8 +17,3 @@ def create_parser() -> ArgumentParser:
 
     return parser
 
-
-def pad(text: bytes) -> bytes:
-    while len(text) % 8 != 0:
-        text += b' '
-    return text

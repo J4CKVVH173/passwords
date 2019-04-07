@@ -1,14 +1,16 @@
-from Crypto.Cipher import DES
-from tools import create_parser, pad, join
+from Crypto.Cipher import AES
+from tools import create_parser, join
+from Crypto.Util.Padding import pad
+from base64 import b64encode
 
 if __name__ == '__main__':
     parser = create_parser()
     namespace = parser.parse_args()
 
     key = namespace.password.encode()
-    key = pad(key)
+    key = pad(key, AES.block_size)
 
-    des = DES.new(key, DES.MODE_ECB)
+    cipher = AES.new(key, AES.MODE_CBC)
 
     try:
         # try to open file with passwords
@@ -20,19 +22,21 @@ if __name__ == '__main__':
 
     passwords = file.read().encode()
     file.close()
-    passwords = pad(passwords)
 
-    encrypted_text = des.encrypt(passwords)
+    encrypted_bytes = cipher.encrypt(pad(passwords, AES.block_size))
 
     path = namespace.encryptedfile
     name = namespace.name
 
+    iv = b64encode(cipher.iv).decode('utf-8')
+    encrypted = b64encode(encrypted_bytes).decode('utf-8')
+
     try:
         # open or create file via path
-        file = open(path, 'wb')
+        file = open(path, 'w')
     except IsADirectoryError:
         # if path with out name, try to create or open file with name
-        file = open(join(path, name), 'wb')
+        file = open(join(path, name), 'w')
     except FileNotFoundError:
         # can not fined dir with file
         print('No such file or dir')
@@ -41,7 +45,5 @@ if __name__ == '__main__':
         print('Path error')
         raise SystemExit(1)
 
-
-    file.write(encrypted_text)
+    file.write(iv + encrypted)
     file.close()
-
