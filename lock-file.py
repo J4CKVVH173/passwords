@@ -1,6 +1,5 @@
 from Crypto.Cipher import AES
-from tools import create_parser, join
-from Crypto.Util.Padding import pad
+from tools import create_parser, join, pad
 from base64 import b64encode
 
 if __name__ == '__main__':

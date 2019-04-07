@@ -1,6 +1,5 @@
 from Crypto.Cipher import AES
-from Crypto.Util.Padding import pad, unpad
-from tools import create_parser, join, ArgumentParser
+from tools import create_parser, join, ArgumentParser, pad, unpad
 from base64 import b64decode
 
 
